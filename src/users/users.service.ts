@@ -29,6 +29,12 @@ export class UsersService {
     return result[0] ?? null;
   }
 
+  async findAll() {
+    return this.db
+      .select({ id: schema.users.id, email: schema.users.email, createdAt: schema.users.createdAt })
+      .from(schema.users);
+  }
+
   async createUser(email: string, password: string) {
     const existing = await this.findByEmail(email);
     if (existing) throw new ConflictException('Email already registered');

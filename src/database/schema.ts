@@ -13,7 +13,15 @@ export const folders = pgTable('folders', {
   name: varchar('name', { length: 255 }).notNull(),
   parentId: uuid('parent_id'),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  visibility: varchar('visibility', { length: 20 }).$type<'public' | 'private'>().default('public').notNull(),
   isDeleted: boolean('is_deleted').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const folderShares = pgTable('folder_shares', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  folderId: uuid('folder_id').notNull().references(() => folders.id, { onDelete: 'cascade' }),
+  sharedWithUserId: uuid('shared_with_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -33,6 +41,7 @@ export const files = pgTable('files', {
 export const usersRelations = relations(users, ({ many }) => ({
   folders: many(folders),
   files: many(files),
+  sharedFolders: many(folderShares),
 }));
 
 export const foldersRelations = relations(folders, ({ one, many }) => ({
@@ -40,6 +49,12 @@ export const foldersRelations = relations(folders, ({ one, many }) => ({
   parent: one(folders, { fields: [folders.parentId], references: [folders.id], relationName: 'parentChild' }),
   children: many(folders, { relationName: 'parentChild' }),
   files: many(files),
+  shares: many(folderShares),
+}));
+
+export const folderSharesRelations = relations(folderShares, ({ one }) => ({
+  folder: one(folders, { fields: [folderShares.folderId], references: [folders.id] }),
+  sharedWith: one(users, { fields: [folderShares.sharedWithUserId], references: [users.id] }),
 }));
 
 export const filesRelations = relations(files, ({ one }) => ({
@@ -53,3 +68,5 @@ export type Folder = typeof folders.$inferSelect;
 export type NewFolder = typeof folders.$inferInsert;
 export type File = typeof files.$inferSelect;
 export type NewFile = typeof files.$inferInsert;
+export type FolderShare = typeof folderShares.$inferSelect;
+export type NewFolderShare = typeof folderShares.$inferInsert;
