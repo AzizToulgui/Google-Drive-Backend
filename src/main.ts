@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { LoggingInterceptor } from './middleware/logger.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,9 +21,10 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
     }),
   );
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  console.log(`Backend running on http://localhost:${port}`);
+  console.log(`🚀 Application is running on: http://localhost:${port}`);
 }
 bootstrap();
