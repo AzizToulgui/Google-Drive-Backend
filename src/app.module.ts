@@ -7,6 +7,7 @@ import { FoldersModule } from './folders/folders.module';
 import { FilesModule } from './files/files.module';
 import { StorageModule } from './storage/storage.module';
 import { SearchModule } from './search/search.module';
+import { LibraryColumnsModule } from './library-columns/library-columns.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SearchModule } from './search/search.module';
     StorageModule,
     AuthModule,
     UsersModule,
+    LibraryColumnsModule,
     FoldersModule,
     FilesModule,
     SearchModule,

@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, boolean, bigint, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, bigint, timestamp, integer, unique } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
@@ -38,6 +38,38 @@ export const files = pgTable('files', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const libraryColumns = pgTable('library_columns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  libraryId: uuid('library_id')
+    .notNull()
+    .references(() => folders.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  type: varchar('type', { length: 20 })
+    .$type<'text' | 'integer' | 'float' | 'enum'>()
+    .notNull(),
+  enumOptions: text('enum_options').array(),
+  defaultValue: text('default_value'),
+  position: integer('position').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const itemColumnValues = pgTable(
+  'item_column_values',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    columnId: uuid('column_id')
+      .notNull()
+      .references(() => libraryColumns.id, { onDelete: 'cascade' }),
+    itemId: uuid('item_id').notNull(),
+    itemType: varchar('item_type', { length: 10 })
+      .$type<'file' | 'folder'>()
+      .notNull(),
+    value: text('value'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [unique('icv_column_item_uniq').on(t.columnId, t.itemId, t.itemType)],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   folders: many(folders),
   files: many(files),
@@ -70,3 +102,20 @@ export type File = typeof files.$inferSelect;
 export type NewFile = typeof files.$inferInsert;
 export type FolderShare = typeof folderShares.$inferSelect;
 export type NewFolderShare = typeof folderShares.$inferInsert;
+
+export const libraryColumnsRelations = relations(libraryColumns, ({ one, many }) => ({
+  library: one(folders, { fields: [libraryColumns.libraryId], references: [folders.id] }),
+  values: many(itemColumnValues),
+}));
+
+export const itemColumnValuesRelations = relations(itemColumnValues, ({ one }) => ({
+  column: one(libraryColumns, {
+    fields: [itemColumnValues.columnId],
+    references: [libraryColumns.id],
+  }),
+}));
+
+export type LibraryColumn = typeof libraryColumns.$inferSelect;
+export type NewLibraryColumn = typeof libraryColumns.$inferInsert;
+export type ItemColumnValue = typeof itemColumnValues.$inferSelect;
+export type NewItemColumnValue = typeof itemColumnValues.$inferInsert;
